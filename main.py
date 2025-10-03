@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Header
 from fastapi.responses import JSONResponse
 import json
 from datetime import datetime
@@ -104,11 +104,20 @@ async def debug_request(request: Request):
         "request_info": response_data
     })
 
+@app.get('/getjwt')
+async def get_jwt(x_jwt_assertion: str = Header(None)):
+    """
+    Endpoint to retrieve JWT token
+    """
+    # Simulate JWT token retrieval
+    return JSONResponse({"jwt": x_jwt_assertion})
+
 @app.get('/')
-async def home():
+async def home(x_jwt_assertion: str = Header(None)):
     """
     Home endpoint with usage instructions
     """
+    print(f"JWT Assertion Header: {x_jwt_assertion}")
     return JSONResponse({
         "message": "Sample API Debug Server",
         "description": "This API logs all incoming request details",
