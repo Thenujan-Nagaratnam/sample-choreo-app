@@ -1,0 +1,460 @@
+openapi: 3.1.0
+info:
+  title: Sample API Debug Server
+  description: |
+    A Flask API that captures and logs all incoming request details including headers, payload, and other metadata.
+    This API is designed for debugging and testing purposes, providing detailed information about HTTP requests.
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+security: []  # No security required for this debug API
+
+servers:
+  - url: http://localhost:8005
+    description: Local development server
+  - url: https://your-api-domain.com
+    description: Production server
+
+paths:
+  /:
+    get:
+      summary: Home endpoint with usage instructions
+      description: Returns information about the API, available endpoints, and usage examples
+      operationId: getHome
+      tags:
+        - Information
+      responses:
+        '200':
+          description: API information and usage instructions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HomeResponse'
+              example:
+                message: "Sample API Debug Server"
+                description: "This API logs all incoming request details"
+                endpoints:
+                  "/": "This help message"
+                  "/api/debug": "Debug endpoint that logs all request information"
+                usage:
+                  GET: "curl http://localhost:8005/api/debug"
+                  POST_JSON: "curl -X POST -H 'Content-Type: application/json' -d '{\"key\":\"value\"}' http://localhost:8005/api/debug"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health status of the API server
+      operationId: getHealth
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                timestamp: "2025-10-03T10:30:00.000Z"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/debug:
+    get:
+      summary: Debug GET request
+      description: Logs and returns all GET request information including headers and query parameters
+      operationId: debugGet
+      tags:
+        - Debug
+      parameters:
+        - name: sample_param
+          in: query
+          description: Sample query parameter for testing
+          required: false
+          schema:
+            type: string
+            example: "test_value"
+      responses:
+        '200':
+          description: Request logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Debug POST request
+      description: Logs and returns all POST request information including headers, form data, and JSON payload
+      operationId: debugPost
+      tags:
+        - Debug
+      parameters:
+        - name: sample_param
+          in: query
+          description: Sample query parameter for testing
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request payload (can be JSON, form data, or raw text)
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example:
+              name: "John Doe"
+              age: 30
+              email: "john@example.com"
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              additionalProperties:
+                type: string
+            example:
+              name: "John Doe"
+              age: "30"
+              email: "john@example.com"
+          text/plain:
+            schema:
+              type: string
+            example: "Raw text data"
+      responses:
+        '200':
+          description: Request logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Debug PUT request
+      description: Logs and returns all PUT request information
+      operationId: debugPut
+      tags:
+        - Debug
+      parameters:
+        - name: sample_param
+          in: query
+          description: Sample query parameter for testing
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request payload for PUT operation
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example:
+              id: 123
+              status: "updated"
+      responses:
+        '200':
+          description: Request logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Debug DELETE request
+      description: Logs and returns all DELETE request information
+      operationId: debugDelete
+      tags:
+        - Debug
+      parameters:
+        - name: id
+          in: query
+          description: ID of the resource to delete
+          required: false
+          schema:
+            type: string
+            example: "123"
+      responses:
+        '200':
+          description: Request logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    patch:
+      summary: Debug PATCH request
+      description: Logs and returns all PATCH request information
+      operationId: debugPatch
+      tags:
+        - Debug
+      parameters:
+        - name: sample_param
+          in: query
+          description: Sample query parameter for testing
+          required: false
+          schema:
+            type: string
+      requestBody:
+        description: Request payload for PATCH operation
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+            example:
+              field_to_update: "new_value"
+      responses:
+        '200':
+          description: Request logged successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DebugResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    HomeResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Welcome message
+          example: "Sample API Debug Server"
+        description:
+          type: string
+          description: API description
+          example: "This API logs all incoming request details"
+        endpoints:
+          type: object
+          description: Available endpoints
+          additionalProperties:
+            type: string
+        usage:
+          type: object
+          description: Usage examples
+          additionalProperties:
+            type: string
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - timestamp
+      properties:
+        status:
+          type: string
+          description: Health status of the API
+          example: "healthy"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when health check was performed
+          example: "2025-10-03T10:30:00.000Z"
+
+    DebugResponse:
+      type: object
+      required:
+        - message
+        - request_info
+      properties:
+        message:
+          type: string
+          description: Success message
+          example: "Request received and logged successfully"
+        request_info:
+          $ref: '#/components/schemas/RequestInfo'
+
+    RequestInfo:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the request was received
+          example: "2025-10-03T10:30:00.000Z"
+        method:
+          type: string
+          description: HTTP method used
+          example: "POST"
+        url:
+          type: string
+          description: Complete request URL
+          example: "http://localhost:8005/api/debug?param=value"
+        path:
+          type: string
+          description: Request path
+          example: "/api/debug"
+        query_string:
+          type: string
+          description: Raw query string
+          example: "param=value&test=123"
+        headers:
+          type: object
+          description: All request headers
+          additionalProperties:
+            type: string
+          example:
+            Content-Type: "application/json"
+            User-Agent: "curl/7.64.1"
+            Accept: "*/*"
+        query_parameters:
+          type: object
+          description: Parsed query parameters
+          additionalProperties:
+            type: string
+          example:
+            param: "value"
+            test: "123"
+        form_data:
+          type: object
+          description: Form data (if any)
+          additionalProperties:
+            type: string
+          example:
+            name: "John"
+            age: "30"
+        json_payload:
+          anyOf:
+            - type: object
+            - type: array
+            - type: "null"
+          description: JSON payload (if any)
+          example:
+            name: "John Doe"
+            age: 30
+        raw_data:
+          type: string
+          description: Raw request data
+          example: '{"name": "John", "age": 30}'
+        content_type:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: Content type of the request
+          example: "application/json"
+        content_length:
+          anyOf:
+            - type: integer
+            - type: "null"
+          description: Content length of the request
+          example: 25
+        remote_addr:
+          type: string
+          description: Remote IP address
+          example: "127.0.0.1"
+        user_agent:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: User agent string
+          example: "curl/7.64.1"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type
+          example: "Internal Server Error"
+        message:
+          type: string
+          description: Error message
+          example: "An unexpected error occurred"
+        timestamp:
+          type: string
+          format: date-time
+          description: Timestamp when the error occurred
+          example: "2025-10-03T10:30:00.000Z"
+
+tags:
+  - name: Information
+    description: API information and documentation endpoints
+  - name: Health
+    description: Health check endpoints
+  - name: Debug
+    description: Debug endpoints that log request information
+
+externalDocs:
+  description: Find more info in the repository
+  url: https://github.com/Thenujan-Nagaratnam/sample-choreo-app
