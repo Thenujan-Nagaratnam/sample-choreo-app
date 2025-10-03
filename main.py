@@ -1,11 +1,14 @@
-from flask import Flask, request, jsonify
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.responses import JSONResponse
 import json
 from datetime import datetime
+import uvicorn
+from typing import Any, Dict, Optional
 
-app = Flask(__name__)
+app = FastAPI(title="Sample API Debug Server", version="1.0.0")
 
-@app.route('/api/debug', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
-def debug_request():
+@app.api_route('/api/debug', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
+async def debug_request(request: Request):
     """
     Debug endpoint that prints and returns all request information
     """
@@ -13,54 +16,66 @@ def debug_request():
     print(f"Request received at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("="*50)
     
+    # Get request body
+    body = await request.body()
+    
+    # Try to parse JSON
+    json_data = None
+    try:
+        if body and request.headers.get("content-type", "").startswith("application/json"):
+            json_data = json.loads(body.decode('utf-8'))
+    except:
+        pass
+    
     # Print request method and URL
     print(f"Method: {request.method}")
     print(f"URL: {request.url}")
-    print(f"Path: {request.path}")
-    print(f"Query String: {request.query_string.decode('utf-8')}")
+    print(f"Path: {request.url.path}")
+    print(f"Query String: {request.url.query}")
     
     # Print all headers
     print("\nHEADERS:")
     print("-" * 20)
-    for header_name, header_value in request.headers:
+    for header_name, header_value in request.headers.items():
         print(f"{header_name}: {header_value}")
     
     # Print query parameters
     print("\nQUERY PARAMETERS:")
     print("-" * 20)
-    if request.args:
-        for key, value in request.args.items():
+    if request.query_params:
+        for key, value in request.query_params.items():
             print(f"{key}: {value}")
     else:
         print("No query parameters")
     
-    # Print form data (if any)
+    # Print form data (for form submissions)
     print("\nFORM DATA:")
     print("-" * 20)
-    if request.form:
-        for key, value in request.form.items():
-            print(f"{key}: {value}")
+    form_data = {}
+    if request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
+        try:
+            form = await request.form()
+            form_data = dict(form)
+            for key, value in form_data.items():
+                print(f"{key}: {value}")
+        except:
+            print("Error parsing form data")
     else:
         print("No form data")
     
     # Print JSON payload (if any)
     print("\nJSON PAYLOAD:")
     print("-" * 20)
-    try:
-        if request.is_json and request.get_json():
-            json_data = request.get_json()
-            print(json.dumps(json_data, indent=2))
-        else:
-            print("No JSON payload")
-    except Exception as e:
-        print(f"Error parsing JSON: {e}")
+    if json_data:
+        print(json.dumps(json_data, indent=2))
+    else:
+        print("No JSON payload")
     
     # Print raw data
     print("\nRAW DATA:")
     print("-" * 20)
-    raw_data = request.get_data(as_text=True)
-    if raw_data:
-        print(raw_data)
+    if body:
+        print(body.decode('utf-8', errors='ignore'))
     else:
         print("No raw data")
     
@@ -70,45 +85,33 @@ def debug_request():
     response_data = {
         "timestamp": datetime.now().isoformat(),
         "method": request.method,
-        "url": request.url,
-        "path": request.path,
-        "query_string": request.query_string.decode('utf-8'),
+        "url": str(request.url),
+        "path": request.url.path,
+        "query_string": request.url.query,
         "headers": dict(request.headers),
-        "query_parameters": dict(request.args),
-        "form_data": dict(request.form),
-        "json_payload": request.get_json() if request.is_json else None,
-        "raw_data": request.get_data(as_text=True),
-        "content_type": request.content_type,
-        "content_length": request.content_length,
-        "remote_addr": request.remote_addr,
-        "user_agent": request.user_agent.string if request.user_agent else None
+        "query_parameters": dict(request.query_params),
+        "form_data": form_data,
+        "json_payload": json_data,
+        "raw_data": body.decode('utf-8', errors='ignore') if body else "",
+        "content_type": request.headers.get("content-type"),
+        "content_length": len(body) if body else 0,
+        "client_host": request.client.host if request.client else None,
+        "user_agent": request.headers.get("user-agent")
     }
     
-    return jsonify({
+    return JSONResponse({
         "message": "Request received and logged successfully",
         "request_info": response_data
-    }), 200
+    })
 
-@app.route('/', methods=['GET'])
-def home():
+@app.get('/')
+async def home():
     """
     Home endpoint with usage instructions
     """
-    # Collect request data instead of printing
-    request_data = {
-        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "method": request.method,
-        "url": request.url,
-        "path": request.path,
-        "query_string": request.query_string.decode('utf-8'),
-        "headers": dict(request.headers),
-        "query_parameters": dict(request.args) if request.args else "No query parameters"
-    }
-    
-    return jsonify({
+    return JSONResponse({
         "message": "Sample API Debug Server",
         "description": "This API logs all incoming request details",
-        "request_info": request_data,
         "endpoints": {
             "/": "This help message",
             "/api/debug": "Debug endpoint that logs all request information"
@@ -119,14 +122,14 @@ def home():
             "POST_FORM": "curl -X POST -d 'name=John&age=30' http://localhost:8005/api/debug",
             "WITH_HEADERS": "curl -H 'X-Custom-Header: custom-value' -H 'Authorization: Bearer token123' http://localhost:8005/api/debug"
         }
-    }), 200
+    })
 
-@app.route('/health', methods=['GET'])
-def health_check():
+@app.get('/health')
+async def health_check():
     """
     Health check endpoint
     """
-    return jsonify({"status": "healthy", "timestamp": datetime.now().isoformat()}), 200
+    return JSONResponse({"status": "healthy", "timestamp": datetime.now().isoformat()})
 
 if __name__ == '__main__':
     print("Starting Sample API Debug Server...")
@@ -137,4 +140,4 @@ if __name__ == '__main__':
     print("\nServer will start on http://localhost:8005")
     print("Press Ctrl+C to stop the server")
     
-    app.run(debug=True, host='0.0.0.0', port=8005)
+    uvicorn.run(app, host="0.0.0.0", port=8005)
