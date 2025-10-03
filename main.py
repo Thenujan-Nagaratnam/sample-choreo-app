@@ -94,9 +94,21 @@ def home():
     """
     Home endpoint with usage instructions
     """
+    # Collect request data instead of printing
+    request_data = {
+        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "method": request.method,
+        "url": request.url,
+        "path": request.path,
+        "query_string": request.query_string.decode('utf-8'),
+        "headers": dict(request.headers),
+        "query_parameters": dict(request.args) if request.args else "No query parameters"
+    }
+    
     return jsonify({
         "message": "Sample API Debug Server",
         "description": "This API logs all incoming request details",
+        "request_info": request_data,
         "endpoints": {
             "/": "This help message",
             "/api/debug": "Debug endpoint that logs all request information"
