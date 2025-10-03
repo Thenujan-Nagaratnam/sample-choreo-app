@@ -125,6 +125,7 @@ async def home(x_jwt_assertion: str = Header(None)):
             "/": "This help message",
             "/api/debug": "Debug endpoint that logs all request information"
         },
+        "x-jwt-assertion": x_jwt_assertion,
         "usage": {
             "GET": "curl http://localhost:8005/api/debug",
             "POST_JSON": "curl -X POST -H 'Content-Type: application/json' -d '{\"key\":\"value\"}' http://localhost:8005/api/debug",
